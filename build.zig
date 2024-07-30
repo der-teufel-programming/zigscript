@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     const zigscript_exe = blk: {
         const exe = b.addExecutable(.{
             .name = "zigscript",
-            .root_source_file = .{ .path = "cmdline.zig" },
+            .root_source_file = b.path("cmdline.zig"),
             .target = target,
             .optimize = optimize,
         });
@@ -28,7 +28,7 @@ pub fn build(b: *std.Build) void {
     {
         const exe = b.addExecutable(.{
             .name = "zigscript-test",
-            .root_source_file = .{ .path = "test.zig" },
+            .root_source_file = b.path("test.zig"),
             .target = target,
             .optimize = optimize,
         });
@@ -43,9 +43,8 @@ pub fn build(b: *std.Build) void {
     }
     {
         const run = b.addRunArtifact(zigscript_exe);
-        run.addFileSourceArg(.{ .path = "examples/helloworld.zigscript" });
+        run.addFileArg(b.path("examples/helloworld.zigscript"));
         run.expectStdOutEqual("Hello, World!\n");
         test_step.dependOn(&run.step);
-
     }
 }

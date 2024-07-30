@@ -15,8 +15,7 @@ pub fn main() !void {
     try testError("@assert(false or 0)", "expected type 'bool', found 'number'");
     try testError(
         \\@assert("hello" or "world")
-        , "expected type 'bool', found 'string'"
-    );
+    , "expected type 'bool', found 'string'");
     try testExpr("@assert(true or false)");
     try testExpr("@assert(false or false or true)");
     try testError("@assert(false or false or false)", "assert failed");
@@ -31,7 +30,8 @@ pub fn main() !void {
     try testError("@assert(true and 0)", "expected type 'bool', found 'number'");
     try testError(
         \\@assert("hello" and "world")
-        , "expected type 'bool', found 'string'",
+    ,
+        "expected type 'bool', found 'string'",
     );
     try testExpr("@assert(false == false)");
     try testExpr("@assert(false != true)");
@@ -51,7 +51,8 @@ pub fn main() !void {
     try testExpr("@assert(0b1010_0110 == 0xa6)");
     try testError(
         \\@assert(0 == "Hello")
-        , "cannot compare strings with ==",
+    ,
+        "cannot compare strings with ==",
     );
     try testError("@assert(0x0)", "expected type 'bool', found 'number'");
     try testError("@assert(0o0)", "expected type 'bool', found 'number'");
@@ -70,28 +71,22 @@ pub fn main() !void {
 
     try testError(
         \\@assert("a" == "a")
-        , "cannot compare strings with =="
-    );
+    , "cannot compare strings with ==");
     try testError(
         \\@assert("a" != "a")
-        , "cannot compare strings with !="
-    );
+    , "cannot compare strings with !=");
     try testError(
         \\@assert("a" < "a")
-        , "cannot compare strings with <"
-    );
+    , "cannot compare strings with <");
     try testError(
         \\@assert("a" <= "a")
-        , "cannot compare strings with <="
-    );
+    , "cannot compare strings with <=");
     try testError(
         \\@assert("a" > "a")
-        , "cannot compare strings with >"
-    );
+    , "cannot compare strings with >");
     try testError(
         \\@assert("a" >= "a")
-        , "cannot compare strings with >="
-    );
+    , "cannot compare strings with >=");
 
     try testError("@out()", "expected 1 argument(s), found 0");
     try testError("@out(0)", "expected type 'string', found 'number'");
@@ -100,7 +95,8 @@ pub fn main() !void {
     );
     try testError(
         \\@out("\?")
-        , "invalid string literal",
+    ,
+        "invalid string literal",
     );
 
     try testError("@assert(false ++ false)", "expected indexable; found 'bool'");
@@ -208,34 +204,34 @@ pub fn main() !void {
 }
 
 fn testExpr(src: [:0]const u8) !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){ };
-    defer switch (gpa.deinit()) { .ok => {}, .leak => @panic("leak!") };
-    var vm = Vm{
-        .src = src,
-        .allocator = gpa.allocator()
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer switch (gpa.deinit()) {
+        .ok => {},
+        .leak => @panic("leak!"),
     };
+    var vm = Vm{ .src = src, .allocator = gpa.allocator() };
     defer vm.deinit();
     if (interp.Expr(src, 0, &vm)) |end| {
         if (end != src.len) {
-            std.log.err("src '{s}' is not an Expr (end={?})", .{src, end});
+            std.log.err("src '{s}' is not an Expr (end={?})", .{ src, end });
         }
         std.debug.assert(vm.scope_stack.items.len == 0);
     } else |vm_err| switch (vm_err) {
         error.Vm => {
             const err = vm.err orelse @panic("vm reported error but has none?");
             const error_msg = err.getTestMsg();
-            std.log.err("src '{s}' had unexpected error: {s}", .{src, error_msg});
+            std.log.err("src '{s}' had unexpected error: {s}", .{ src, error_msg });
             return error.TestUnexpectedResult;
         },
     }
 }
 fn testError(src: [:0]const u8, expected_error: []const u8) !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){ };
-    defer switch (gpa.deinit()) { .ok => {}, .leak => @panic("leak!") };
-    var vm = Vm{
-        .src = src,
-        .allocator = gpa.allocator()
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer switch (gpa.deinit()) {
+        .ok => {},
+        .leak => @panic("leak!"),
     };
+    var vm = Vm{ .src = src, .allocator = gpa.allocator() };
     defer vm.deinit();
     if (interp.Expr(src, 0, &vm)) |_| {
         std.log.err("src '{s}' unexpectedly didn't have an error", .{src});
@@ -250,34 +246,34 @@ fn testError(src: [:0]const u8, expected_error: []const u8) !void {
 }
 
 fn testBlock(src: [:0]const u8) !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){ };
-    defer switch (gpa.deinit()) { .ok => {}, .leak => @panic("leak!") };
-    var vm = Vm{
-        .src = src,
-        .allocator = gpa.allocator()
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer switch (gpa.deinit()) {
+        .ok => {},
+        .leak => @panic("leak!"),
     };
+    var vm = Vm{ .src = src, .allocator = gpa.allocator() };
     defer vm.deinit();
     if (interp.Block(src, 0, &vm)) |end| {
         if (end != src.len) {
-            std.log.err("src '{s}' is not a Block (end={?})", .{src, end});
+            std.log.err("src '{s}' is not a Block (end={?})", .{ src, end });
         }
         std.debug.assert(vm.scope_stack.items.len == 0);
     } else |vm_err| switch (vm_err) {
         error.Vm => {
             const err = vm.err orelse @panic("vm reported error but has none?");
             const error_msg = err.getTestMsg();
-            std.log.err("src '{s}' had unexpected error: {s}", .{src, error_msg});
+            std.log.err("src '{s}' had unexpected error: {s}", .{ src, error_msg });
             return error.TestUnexpectedResult;
         },
     }
 }
 fn testBlockError(src: [:0]const u8, expected_error: []const u8) !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){ };
-    defer switch (gpa.deinit()) { .ok => {}, .leak => @panic("leak!") };
-    var vm = Vm{
-        .src = src,
-        .allocator = gpa.allocator()
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer switch (gpa.deinit()) {
+        .ok => {},
+        .leak => @panic("leak!"),
     };
+    var vm = Vm{ .src = src, .allocator = gpa.allocator() };
     defer vm.deinit();
     if (interp.Block(src, 0, &vm)) |_| {
         std.log.err("src '{s}' unexpectedly didn't have an error", .{src});
@@ -292,12 +288,12 @@ fn testBlockError(src: [:0]const u8, expected_error: []const u8) !void {
 }
 
 fn testMain(src: [:0]const u8) !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){ };
-    defer switch (gpa.deinit()) { .ok => {}, .leak => @panic("leak!") };
-    var vm = Vm{
-        .src = src,
-        .allocator = gpa.allocator()
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer switch (gpa.deinit()) {
+        .ok => {},
+        .leak => @panic("leak!"),
     };
+    var vm = Vm{ .src = src, .allocator = gpa.allocator() };
     defer vm.deinit();
 
     var off: usize = 0;
@@ -311,14 +307,14 @@ fn testMain(src: [:0]const u8) !void {
             error.Vm => {
                 const err = vm.err orelse @panic("vm reported error but has none?");
                 const error_msg = err.getTestMsg();
-                std.log.err("src '{s}' had unexpected error: {s}", .{src, error_msg});
+                std.log.err("src '{s}' had unexpected error: {s}", .{ src, error_msg });
                 return error.TestUnexpectedResult;
             },
         }
     }
 
     {
-        var token = interp.lex(src, off);
+        const token = interp.lex(src, off);
         if (token.tag != .eof)
             return error.TestUnexpectedResult;
     }

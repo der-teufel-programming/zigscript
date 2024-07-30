@@ -4,7 +4,7 @@ const Vm = zigscript.vm.Vm;
 
 fn applyPrefixOps(src: [:0]const u8, start: usize, op_count: u16, vm: *Vm) error{Vm}!void {
     var off = start;
-    for (0 .. op_count) |_| {
+    for (0..op_count) |_| {
         const token = lex(src, off);
         const op = PrefixOp(token) orelse unreachable;
         try vm.applyPrefixOp(op, token.loc.start);
@@ -17,7 +17,6 @@ pub fn lex(src: [:0]const u8, off: usize) std.zig.Token {
     var tokenizer = std.zig.Tokenizer{
         .buffer = src,
         .index = off,
-        .pending_invalid_token = null,
     };
     return tokenizer.next();
 }
@@ -151,7 +150,7 @@ const VarDeclProtoResult = struct {
 //
 // Not allowing type designation for now.
 fn VarDeclProto(src: [:0]const u8, start: usize) ?VarDeclProtoResult {
-    const decl: struct { mutability: zigscript.vm.Mutability, end: usize} = blk: {
+    const decl: struct { mutability: zigscript.vm.Mutability, end: usize } = blk: {
         const token = lex(src, start);
         if (token.tag == .keyword_const)
             break :blk .{ .mutability = .@"const", .end = token.loc.end };
@@ -175,7 +174,7 @@ fn VarDeclProto(src: [:0]const u8, start: usize) ?VarDeclProtoResult {
 //      / SwitchExpr
 //      / VarDeclExprStatement
 pub fn Statement(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
-    var first_token = lex(src, start);
+    const first_token = lex(src, start);
 
     if (first_token.tag == .keyword_comptime)
         @panic("todo");
@@ -260,8 +259,7 @@ fn WhileStatement(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usiz
 //      / Expr (AssignOp Expr / (COMMA (VarDeclProto / Expr))+ EQUAL Expr)? SEMICOLON
 fn VarDeclExprStatement(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
     if (VarDeclProto(src, start)) |decl| {
-
-        var off = decl.id.end;
+        const off = decl.id.end;
         while (true) {
             const token = lex(src, off);
             if (token.tag == .comma) @panic("todo");
@@ -436,7 +434,6 @@ fn MultiplyExpr(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize 
 
 // PrefixExpr <- PrefixOp* PrimaryExpr
 fn PrefixExpr(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
-
     var op_count: u16 = 0;
     const prefix_end = blk: {
         var off = start;
@@ -509,7 +506,7 @@ fn PrimaryExpr(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
 
 // Block <- LBRACE Statement* RBRACE
 pub fn Block(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
-    var statements_start = blk: {
+    const statements_start = blk: {
         const token = lex(src, start);
         if (token.tag != .l_brace) return null;
         break :blk token.loc.end;
@@ -586,7 +583,7 @@ fn ForExpr(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
 // WhileExpr <- WhilePrefix Expr (KEYWORD_else Payload? Expr)?
 fn WhileExpr(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_while) return null;
     }
     _ = vm_opt;
@@ -912,7 +909,7 @@ fn BlockLabel(src: [:0]const u8, start: usize, vm_opt: ?*Vm) ?usize {
 // LinkSection <- KEYWORD_linksection LPAREN Expr RPAREN
 fn LinkSection(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_linksection) return null;
     }
     _ = vm_opt;
@@ -922,7 +919,7 @@ fn LinkSection(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
 // AddrSpace <- KEYWORD_addrspace LPAREN Expr RPAREN
 fn AddrSpace(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_addrspace) return null;
     }
     _ = vm_opt;
@@ -932,13 +929,12 @@ fn AddrSpace(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
 // CallConv <- KEYWORD_callconv LPAREN Expr RPAREN
 fn CallConv(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_callconv) return null;
     }
     _ = vm_opt;
     @panic("todo");
 }
-
 
 // Original Zig Rule:
 // -------------------
@@ -964,7 +960,7 @@ fn ParamDecl(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
 // IfPrefix <- KEYWORD_if LPAREN Expr RPAREN PtrPayload?
 fn IfPrefix(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_if) return null;
     }
     _ = vm_opt;
@@ -974,7 +970,7 @@ fn IfPrefix(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
 // WhilePrefix <- KEYWORD_while LPAREN Expr RPAREN PtrPayload? WhileContinueExpr?
 fn WhilePrefix(src: [:0]const u8, start: usize, vm_opt: ?*Vm) ?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_while) return null;
     }
     _ = vm_opt;
@@ -984,7 +980,7 @@ fn WhilePrefix(src: [:0]const u8, start: usize, vm_opt: ?*Vm) ?usize {
 // ForPrefix <- KEYWORD_for LPAREN ForArgumentsList RPAREN PtrListPayload
 fn ForPrefix(src: [:0]const u8, start: usize, vm_opt: ?*Vm) ?usize {
     {
-        var token = lex(src, start);
+        const token = lex(src, start);
         if (token.tag != .keyword_for) return null;
     }
     _ = vm_opt;
@@ -1014,7 +1010,7 @@ fn PtrListPayload(src: [:0]const u8, start: usize) ?PtrListPayloadIterator {
     }
 
     if (token.tag != .identifier) return null;
-    var off = token.loc.end;
+    const off = token.loc.end;
     while (true) {
         token = lex(src, off);
         if (token.tag != .comma) break;
@@ -1167,9 +1163,9 @@ fn SuffixOp(src: [:0]const u8, start: usize, vm_opt: ?*Vm) error{Vm}!?usize {
         @panic("todo");
     } else if (token.tag == .period_asterisk) {
         @panic("todo");
-    // don't see this token in tokenizer.zig
-    //} else if (token.tag == .period_question_mark) {
-    //    @panic("todo");
+        // don't see this token in tokenizer.zig
+        //} else if (token.tag == .period_question_mark) {
+        //    @panic("todo");
     } else return null;
 }
 
